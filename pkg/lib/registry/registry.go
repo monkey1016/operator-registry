@@ -335,8 +335,12 @@ func (r RegistryUpdater) PruneVersionFromRegistry(request PruneVersionFromRegist
 	// Create a map of the operator and versions we want to keep
 	operatorVerMap := make(map[string][]string)
 	for _, pkgVersion := range request.PackageVersions {
-		split := strings.Split(pkgVersion, ":")
-		operatorVerMap[split[0]] = append(operatorVerMap[split[0]], split[1])
+
+		// Make sure we don't have an empty string before we split it
+		if pkgVersion != "" {
+			split := strings.Split(pkgVersion, ":")
+			operatorVerMap[split[0]] = append(operatorVerMap[split[0]], split[1])
+		}
 	}
 
 	// now we sort those lists of versions for later (might only contain one version each)
