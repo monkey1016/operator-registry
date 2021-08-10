@@ -6,6 +6,8 @@ PKG := github.com/operator-framework/operator-registry
 GIT_COMMIT := $(or $(SOURCE_GIT_COMMIT),$(shell git rev-parse --short HEAD))
 OPM_VERSION := $(or $(SOURCE_GIT_TAG),$(shell git describe --always --tags HEAD))
 BUILD_DATE := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
+DOCKER := docker
+IMG_TAG := 
 
 # define characters
 null  :=
@@ -63,21 +65,21 @@ unit:
 sanity-check:
 	# Build a container with the most recent binaries for this project.
 	# Does not include the database, which needs to be added separately.
-	docker build -f upstream-builder.Dockerfile -t sanity-container .
+	$(DOCKER) build -f upstream-builder.Dockerfile -t sanity-container .
 
 	# TODO: add more invocations of the opm binary here
 
 	# serve the container for a second, using the bundles.db in testdata
-	docker run --rm -it -v "$(shell pwd)"/pkg/lib/indexer/testdata/:/database sanity-container \
+	$(DOCKER) run --rm -it -v "$(shell pwd)"/pkg/lib/indexer/testdata/:/database sanity-container \
 		./bin/opm registry serve --database /database/bundles.db --timeout-seconds 1
 
 .PHONY: image
 image:
-	docker build .
+	$(DOCKER) build .
 
 .PHONY: image-upstream
 image-upstream:
-	docker build -f upstream-example.Dockerfile .
+	$(DOCKER) build -f upstream-example.Dockerfile $(IMG_TAG) .
 
 .PHONY: vendor
 vendor:
@@ -98,10 +100,10 @@ codegen:
 
 .PHONY: container-codegen
 container-codegen:
-	docker build -t operator-registry:codegen -f codegen.Dockerfile .
-	docker run --name temp-codegen operator-registry:codegen /bin/true
-	docker cp temp-codegen:/codegen/pkg/api/. ./pkg/api
-	docker rm temp-codegen
+	$(DOCKER) build -t operator-registry:codegen -f codegen.Dockerfile .
+	$(DOCKER) run --name temp-codegen operator-registry:codegen /bin/true
+	$(DOCKER) cp temp-codegen:/codegen/pkg/api/. ./pkg/api
+	$(DOCKER) rm temp-codegen
 
 .PHONY: generate-fakes
 generate-fakes:
